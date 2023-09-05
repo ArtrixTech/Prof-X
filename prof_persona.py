@@ -35,18 +35,16 @@ def generate_markdown(author):
 
     author = scholarly.fill(author)
 
-    # print(author)
+    print("Author Info Fetched.")
 
     # 基础信息部分
     markdown_data = f"# {author['name']}\n"
     markdown_data += "## 基础信息\n"
-    markdown_data += f"- Name: {author['name']}\n"
 
     h_index = None
 
     if 'url_picture' in author:
         markdown_data += f"![image]({author['url_picture']})\n"
-
     if 'affiliation' in author:
         markdown_data += f"- Affiliation: {author['affiliation']}\n"
     if 'interests' in author:
@@ -54,7 +52,7 @@ def generate_markdown(author):
     if 'email_domain' in author:
         markdown_data += f"- Email Domain: {author['email_domain']}\n"
     if 'scholar_id' in author:
-        markdown_data += f"- Google Scholar Profile: [Link](https://scholar.google.com/citations?user={author['scholar_id']})\n"
+        markdown_data += f"- Google Scholar Profile: https://scholar.google.com/citations?user={author['scholar_id']}\n"
     if 'homepage' in author:
         markdown_data += f"- Homepage: [Link]({author['homepage']})\n"
     if 'citedby' in author:
@@ -92,7 +90,7 @@ def generate_markdown(author):
             publication_titles.append(title)
 
         ai_summary, total_tokens = openai_assisted.publication_summarize(publication_ai_data_prep)
-        print(f"{total_tokens} Tokens Used.")
+        print(f"OpenAI Summarized, {total_tokens} Tokens Used.")
 
         ai_summary=json.loads(ai_summary)
 
@@ -104,6 +102,7 @@ def generate_markdown(author):
 
         tr=Translator(TX_SECRET_ID, TX_SECRET_KEY)
         translations=tr.batch_translate(publication_titles, "zh")
+        print("Title Translated.")
 
         for idx,publication in enumerate(publicaions):
             title = publication['bib'].get('title', 'Unknown Title')
@@ -140,9 +139,8 @@ def main():
     input_str = input("Please enter the list of authors separated by commas: ")
     author_names = get_authors_from_input(input_str)
 
-    translator=Translator(TX_SECRET_ID, TX_SECRET_KEY)
-
     for author_name in author_names:
+        print(f"Processing {author_name}:")
         author = choose_author(author_name)
         if author:
             md_output = generate_markdown(author)
