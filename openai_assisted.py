@@ -30,15 +30,34 @@ def publication_summarize(input_text, retry=2):
         max_tokens=768,
         top_p=1,
         frequency_penalty=0,
-        presence_penalty=2
+        presence_penalty=2,
+        stream=True,
     )
 
+    collected_chunks = []
+    collected_messages = []
+
+    # iterate through the stream of events
+    for chunk in response:
+        try:
+            collected_chunks.append(chunk)  # save the event response
+            chunk_message = chunk['choices'][0]['delta']  # extract the message
+            collected_messages.append(chunk_message)  # save the message
+            print(json.loads(str(chunk_message))['content'],end="")  # print the delay and text
+        except:
+            pass
+
+    # print the time delay and text received
+    full_reply_content = ''.join([m.get('content', '') for m in collected_messages])
+
     try:
-        json.loads(response['choices'][0]['message']['content'])
+        json.loads(full_reply_content)
     except:
         if retry > 0:
+            print("OpenAI Return Error, retrying...")
             return publication_summarize(input_text, retry-1)
         else:
             return None, response['usage']['total_tokens']
 
-    return response['choices'][0]['message']['content'], response['usage']['total_tokens']
+    return full_reply_content, response['usage']['total_tokens']
+
