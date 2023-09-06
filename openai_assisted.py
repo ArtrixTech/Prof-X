@@ -37,6 +37,7 @@ def publication_summarize(input_text, retry=2):
         json.loads(response['choices'][0]['message']['content'])
     except:
         if retry > 0:
+            print("OpenAI Failed, Retrying...")
             return publication_summarize(input_text, retry-1)
         else:
             return None, response['usage']['total_tokens']

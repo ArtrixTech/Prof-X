@@ -37,6 +37,8 @@ def generate_markdown(author):
 
     print("Author Info Fetched.")
 
+    # print(author)
+
     # 基础信息部分
     markdown_data = f"# {author['name']}\n"
     markdown_data += "## 基础信息\n"
@@ -144,8 +146,12 @@ def main():
         author = choose_author(author_name)
         if author:
             md_output = generate_markdown(author)
-            save_to_md_file(author['name'], get_top_domain(author.get(
-                'email_domain', '@no_data.com').removeprefix('@')), md_output)
+            mail_raw=author.get('email_domain', '@no_data.com')
+            if '@' in mail_raw:
+                save_to_md_file(author['name'], get_top_domain(mail_raw).removeprefix('@'), md_output)
+            else:
+                save_to_md_file(author['name'], 'unclassified', md_output)
+
 
 
 if __name__ == '__main__':
