@@ -37,16 +37,18 @@ def generate_markdown(author):
 
     print("Author Info Fetched.")
 
-    # print(author)
-
-    # 基础信息部分
-    markdown_data = f"# {author['name']}\n"
-    markdown_data += "## 基础信息\n"
-
+    markdown_data = ""
     h_index = None
 
     if 'url_picture' in author:
         markdown_data += f"![image]({author['url_picture']})\n"
+    if 'citedby' in author:
+        markdown_data += f"- Cited by: {author['citedby']}\n"
+    if 'hindex' in author:
+        markdown_data += f"- h-index: {author['hindex']}\n"
+        h_index = int(author['hindex'])
+    if 'i10index' in author:
+        markdown_data += f"- i10-index: {author['i10index']}\n"
     if 'affiliation' in author:
         markdown_data += f"- Affiliation: {author['affiliation']}\n"
     if 'interests' in author:
@@ -57,14 +59,7 @@ def generate_markdown(author):
         markdown_data += f"- Google Scholar Profile: https://scholar.google.com/citations?user={author['scholar_id']}\n"
     if 'homepage' in author:
         markdown_data += f"- Homepage: [Link]({author['homepage']})\n"
-    if 'citedby' in author:
-        markdown_data += f"- Cited by: {author['citedby']}\n"
-    if 'hindex' in author:
-        markdown_data += f"- h-index: {author['hindex']}\n"
-        h_index = int(author['hindex'])
-    if 'i10index' in author:
-        markdown_data += f"- i10-index: {author['i10index']}\n"
-
+   
 
     # 著作信息部分
     if 'publications' in author:
@@ -128,10 +123,14 @@ def generate_markdown(author):
     return markdown_data
 
 
-def save_to_md_file(author_name, domain, content):
+def save_to_md_file(author_info, domain, content):
     directory = f"saved/{domain}"
     os.makedirs(directory, exist_ok=True)
-    filename = f"{directory}/{author_name}.md"
+
+    h_index=author_info.get("hindex","-1")
+
+    filename = f"{directory}/[{h_index}]{author_info['name']}.md"
+
     with open(filename, 'w', encoding='utf-8') as file:
         file.write(content)
     print(f"Saved to {filename}")
@@ -148,9 +147,9 @@ def main():
             md_output = generate_markdown(author)
             mail_raw=author.get('email_domain', '@no_data.com')
             if '@' in mail_raw:
-                save_to_md_file(author['name'], get_top_domain(mail_raw).removeprefix('@'), md_output)
+                save_to_md_file(author, get_top_domain(mail_raw).removeprefix('@'), md_output)
             else:
-                save_to_md_file(author['name'], 'unclassified', md_output)
+                save_to_md_file(author, 'unclassified', md_output)
 
 
 
