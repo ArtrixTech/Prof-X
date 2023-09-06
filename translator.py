@@ -40,25 +40,39 @@ class Translator:
         except TencentCloudSDKException as err:
             print(err)
 
-    def batch_translate(self, text_list, dest_lang, source_lang="auto"):
+    def batch_translate(self, text_list, dest_lang, source_lang="auto", max_chunk_size=6000):
         try:
+            translated_texts = []
+            chunk = []
+            for text in text_list:
+                if len(chunk) + len(text) <= max_chunk_size:
+                    chunk.append(text)
+                else:
+                    translated_texts.extend(self.translate_chunk(chunk, dest_lang, source_lang))
+                    chunk = []
 
-            req = models.TextTranslateBatchRequest()
-            params = {
-                "Source": source_lang,
-                "Target": dest_lang,
-                "ProjectId": 0,
-                "SourceTextList": text_list
-            }
+            if chunk:
+                translated_texts.extend(self.translate_chunk(chunk, dest_lang, source_lang))
 
-            req.from_json_string(json.dumps(params))
-
-            resp = self.client.TextTranslateBatch(req)
-            return json.loads(resp.to_json_string())['TargetTextList']
+            return translated_texts
 
         except TencentCloudSDKException as err:
             print(err)
             raise ValueError("Tencent Translate Failed")
+
+    def translate_chunk(self, chunk, dest_lang, source_lang):
+        req = models.TextTranslateBatchRequest()
+        params = {
+            "Source": source_lang,
+            "Target": dest_lang,
+            "ProjectId": 0,
+            "SourceTextList": chunk
+        }
+
+        req.from_json_string(json.dumps(params))
+
+        resp = self.client.TextTranslateBatch(req)
+        return json.loads(resp.to_json_string())['TargetTextList']
 
 
 if __name__ == "__main__":

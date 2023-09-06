@@ -22,7 +22,7 @@ def publication_summarize(input_text, retry=3):
             messages=[
                 {
                     "role": "system",
-                    "content": "以下是某作者的著作列表，格式为<Title,PublishYear,CitationNum>\n\n首先根据所有论文总结其研究方向大类（如材料学，计算机科学）；根据研究大类总结对应的小分类（大分类中可以有多个小分类）；同时用中文概述对应小分类的研究成果，不要输出具体论文名，不同分类单独总结，不要前置修饰语，直接枚举\n\n内容使用JSON格式输出\n\n如：\n[{'subject':'计算机科学','sub_areas':[{'area':'计算机图形学', 'summary':‘<总结内容>'}, {'area':'机器学习', 'summary':‘<总结内容>'}]},{'subject':'自动化工程','sub_areas':[{'area':'人形机器人', 'summary':'<总结内容>'}]}]\n\n输出内容使用中文，确保输出完整，不要省略,严格遵守JSON格式"
+                    "content": "以下是某作者的著作列表，格式为<Title,PublishYear,CitationNum>\n\n首先根据所有论文总结其研究方向大类（如材料学，计算机科学）；根据研究大类总结对应的小分类（大分类中可以有多个小分类）；同时用中文概述对应小分类的研究成果，不要输出具体论文名，不同分类单独总结，不要前置修饰语，直接枚举，文字精简\n\n内容使用JSON格式输出\n\n如：\n[{'subject':'计算机科学','sub_areas':[{'area':'计算机图形学', 'summary':‘<总结内容>'}, {'area':'机器学习', 'summary':‘<总结内容>'}]},{'subject':'自动化工程','sub_areas':[{'area':'人形机器人', 'summary':'<总结内容>'}]}]\n\n输出内容使用中文，确保输出完整，不要省略"
                 },
                 {
                     "role": "user",
