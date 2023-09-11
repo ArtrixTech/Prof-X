@@ -5,15 +5,21 @@ import json
 openai.api_key = OPENAI_KEY
 
 
+
 def switch_local():
     openai.api_base = LOCAL_API_BASE
 
 
 def switch_remote():
-    openai.api_base = "https://api.openai.com/v1"
+    openai.api_base = REMOTE_API_BASE
 
 
-def publication_summarize(input_text, retry=3):
+def publication_summarize(input_text, retry=3,remote=True):
+
+    if remote:
+        switch_remote()
+    else:
+        switch_local()
 
     collected_messages = ""
 
