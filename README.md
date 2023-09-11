@@ -5,7 +5,7 @@
 - An OpenAI API key
   - For AI assisted info gathering
   - Could be replaced by any local OpenAI-like API <WIP\>
-  - But still recommended, as OpenAI can provide a far better result
+  - But original OpenAI API is still recommended, as it could provide a far better result
 - A Tencent Translate API Key
   - For translating article names into your language 
   - Chinese only currently :) Will add multilingual support after on
