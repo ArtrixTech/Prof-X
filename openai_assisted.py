@@ -1,6 +1,6 @@
 import os
 import openai
-from config import OPENAI_KEY, LOCAL_API_BASE
+from config import OPENAI_KEY, REMOTE_API_BASE, LOCAL_API_BASE
 import json
 openai.api_key = OPENAI_KEY
 
