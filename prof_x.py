@@ -1,12 +1,13 @@
 from scholarly import scholarly
 import re
 import os
-from utils import get_top_domain
+from utils import get_top_domain, save_plot_to_imgur, input_with_timeout
 from translator import Translator
 from config import TX_SECRET_ID, TX_SECRET_KEY
 import openai_assisted
 import json
 
+failed_authors = []
 
 def get_authors_from_input(input_str):
     return [author.strip() for author in input_str.split(',')]
@@ -15,20 +16,26 @@ def get_authors_from_input(input_str):
 def choose_author(author_name):
     search_query = scholarly.search_author(author_name)
     authors = list(search_query)
+    global failed_authors
 
     if len(authors) == 0:
         print(f"No results found for {author_name}.")
+        failed_authors.append((author_name, "Author Not Found"))
         return None
     if len(authors) == 1:
         return authors[0]
 
     print(f"Found multiple authors for {author_name}:")
+    
     for idx, author in enumerate(authors):
         print(f"{idx + 1}. {author['name']}, {author['affiliation']}")
 
-    choice = int(
-        input("Please select the correct author by entering the number: ")) - 1
-    return authors[choice]
+    choice = input_with_timeout("Please select the correct author by entering the number: \n(Input x to skip this author)",10,'x')
+
+    if choice == 'x' or choice == 'X':
+        failed_authors.append((author_name, "User Skipped/Choose Timeout"))
+        return None
+    return authors[int(choice) - 1]
 
 
 def generate_markdown(author):

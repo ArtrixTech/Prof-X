@@ -39,7 +39,7 @@ TX_SECRET_KEY = "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 
 ### Running
 
-<pre><code>$ python prof_persona.py
+<pre><code>$ python prof_x.py
 </code></pre>
 
 ### One More Thing...

@@ -2,6 +2,7 @@ from publicsuffixlist import PublicSuffixList
 import matplotlib.pyplot as plt
 import requests
 import json
+import os
 
 def get_top_domain(domain: str) -> str:
     psl = PublicSuffixList()
@@ -41,7 +42,45 @@ def save_plot_to_imgur(fig):
 
     return imgur_link
 
+import sys
+import threading
+
+class InputTimeoutError(Exception):
+    pass
+
+def input_with_timeout(prompt, timeout=10, default_input=""):
+    """Prompt user for input, with a given timeout.
+    
+    If the user does not provide input within the timeout, return a default input value.
+    
+    Args:
+    - prompt (str): The input prompt to display to the user.
+    - timeout (int): The number of seconds to wait for user input.
+    - default_input (str): The default input value to return if the user does not provide input.
+
+    Returns:
+    - str: The user's input, or the default input if the user does not provide input within the timeout.
+    """
+    sys.stdout.write(prompt)
+    sys.stdout.flush()
+
+    result = {"value": None}
+
+    def get_input(result):
+        result["value"] = sys.stdin.readline().rstrip()
+
+    thread = threading.Thread(target=get_input, args=(result,))
+    thread.daemon = True
+    thread.start()
+    thread.join(timeout)
+
+    return result["value"] if result["value"] is not None else default_input
+
+
+
 if __name__ == "__main__":
 
     print(get_top_domain("www.baidu.com"))
     print(get_top_domain("a.b.c.co.uk"))
+
+    print(input_with_timeout("Please input something:", 5, "default value"))
