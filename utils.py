@@ -92,19 +92,29 @@ def input_with_timeout(prompt, timeout=10, default_input=""):
     return result["value"] if result["value"] is not None else default_input
 
 
-def clear_screen():
-    # 使用os库来判断操作系统类型，以调用相应的清屏命令
-    os_name = os.name
-    if os_name == 'posix':
-        os.system('clear')
-    elif os_name == 'nt':
-        os.system('cls')
+def display_progress_bar(done,total):
+    """
+    Display progress bar in console.
 
+    Args:
+    - percentage (float): Progress percentage from 0 to 100.
+    """
+
+    # 定义进度条的宽度
+    bar_width = 50
+    blocks = int(done / total * bar_width)
+    bar = '<' + '=' * blocks + ' ' * (bar_width - blocks) + '>'
+    sys.stdout.write("\r" + bar + f" {done}/{total} | {(100*done/total):.2f}%")
+    sys.stdout.flush()
 
 if __name__ == "__main__":
 
-    print(get_top_domain("www.baidu.com"))
-    print(get_top_domain("a.b.c.co.uk"))
+    # print(get_top_domain("www.baidu.com"))
+    # print(get_top_domain("a.b.c.co.uk"))
 
-    print(input_with_timeout("Please input something:", 5, "x"))
-    print("done")
+    # print(input_with_timeout("Please input something:", 5, "x"))
+    # print("done")
+
+    for i in range(101):
+        time.sleep(0.05)
+        display_progress_bar(i,100)

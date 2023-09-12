@@ -1,7 +1,7 @@
 from scholarly import scholarly
 import re
 import os
-from utils import get_top_domain, save_plot_to_imgur, input_with_timeout
+from utils import get_top_domain, save_plot_to_imgur, input_with_timeout, display_progress_bar
 from translator import Translator
 from config import TX_SECRET_ID, TX_SECRET_KEY
 import openai_assisted
@@ -27,10 +27,8 @@ def choose_author(author_name):
         return authors[0]
 
     print(f"Found multiple authors for {author_name}:")
-
     for idx, author in enumerate(authors):
         print(f"{idx + 1}. {author['name']}, {author['affiliation']}")
-
     print("(Input x to skip this author)")
 
     choice = input_with_timeout(
@@ -74,6 +72,16 @@ def generate_markdown(author):
     # 著作信息部分
     if 'publications' in author:
 
+        if h_index:
+            author['publications'] = author['publications'][:h_index]
+
+        print("Fetching publication info...")
+
+        for i, _ in enumerate(author['publications']):
+            author['publications'][i] = scholarly.fill(
+                author['publications'][i])
+            display_progress_bar((i+1), len(author['publications']))
+
         publicaions = author['publications']
 
         summary_section = ""
@@ -82,10 +90,9 @@ def generate_markdown(author):
         publication_ai_data_prep = ""
         publication_titles = []
 
-        if h_index:
-            publicaions = publicaions[:h_index]
+        
 
-        for publication in publicaions:
+        for i, publication in enumerate(publicaions):
             title = publication['bib'].get('title', 'Unknown Title')
             pub_year = publication['bib'].get('pub_year', 'Unknown Year')
             citation = publication['bib'].get('citation', 'Unknown Citation')
@@ -93,22 +100,23 @@ def generate_markdown(author):
             citedby_url = publication.get('citedby_url', '#')
 
             publication_ai_data_prep += f"{title},{pub_year},{num_citations}\n"
-
             publication_titles.append(title)
 
         def summary_ai():
-            ai_summary, total_tokens = openai_assisted.publication_summarize(publication_ai_data_prep)
-        
+            ai_summary, total_tokens = openai_assisted.publication_summarize(
+                publication_ai_data_prep)
+
             if ai_summary:
                 print(f"AI Summarized.")
                 return ai_summary, total_tokens
             else:
-                result=input_with_timeout("AI summarization failed for 3 times, still retry?(y/n): ", 10, 'n')
-                if result=='y' or result=='Y':
+                result = input_with_timeout(
+                    "AI summarization failed for 3 times, still retry?(y/n): ", 10, 'n')
+                if result == 'y' or result == 'Y':
                     return summary_ai()
                 else:
                     return None, -1
-                
+
         ai_summary, total_tokens = summary_ai()
         if ai_summary is None:
             failed_authors.append((author['name'], "AI Summarization Failed"))
