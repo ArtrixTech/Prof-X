@@ -8,8 +8,6 @@ def get_top_domain(domain: str) -> str:
     psl = PublicSuffixList()
     # 获取公共后缀
     suffix = psl.publicsuffix(domain)
-
-    print(domain)
     
     # 域名和公共后缀分割，然后取最后一个部分作为一级域名
     domain_parts = domain.split(".")
@@ -44,14 +42,13 @@ def save_plot_to_imgur(fig):
 
 import sys
 import threading
+import time
 
 class InputTimeoutError(Exception):
     pass
 
 def input_with_timeout(prompt, timeout=10, default_input=""):
     """Prompt user for input, with a given timeout.
-    
-    If the user does not provide input within the timeout, return a default input value.
     
     Args:
     - prompt (str): The input prompt to display to the user.
@@ -61,21 +58,47 @@ def input_with_timeout(prompt, timeout=10, default_input=""):
     Returns:
     - str: The user's input, or the default input if the user does not provide input within the timeout.
     """
-    sys.stdout.write(prompt)
+    sys.stdout.write(f"\r{prompt} (default <{timeout}s> = \"{default_input}\") ")
     sys.stdout.flush()
 
-    result = {"value": None}
+    result = {"value": None,"finished":False}
 
     def get_input(result):
         result["value"] = sys.stdin.readline().rstrip()
+        result["finished"] = True
 
-    thread = threading.Thread(target=get_input, args=(result,))
-    thread.daemon = True
-    thread.start()
-    thread.join(timeout)
+    def show_countdown(timeout,result):
+        for i in range(timeout, 0, -1):
+            if result['finished']:
+                break
+            sys.stdout.write(f"\r{prompt} (default <{i}s> = \"{default_input}\") ")
+            sys.stdout.flush()
+            time.sleep(1)
+
+    input_thread = threading.Thread(target=get_input, args=(result,))
+    input_thread.daemon = True
+    input_thread.start()
+
+    countdown_thread = threading.Thread(target=show_countdown, args=(timeout,result,))
+    countdown_thread.daemon = True
+    countdown_thread.start()
+
+    input_thread.join(timeout)
+
+    # Stop the countdown when input is received or timeout occurs
+    if countdown_thread.is_alive():
+        countdown_thread.join(timeout=0.1)  # Just to ensure the thread is terminated
 
     return result["value"] if result["value"] is not None else default_input
 
+
+def clear_screen():
+    # 使用os库来判断操作系统类型，以调用相应的清屏命令
+    os_name = os.name
+    if os_name == 'posix':
+        os.system('clear')
+    elif os_name == 'nt':
+        os.system('cls')
 
 
 if __name__ == "__main__":
@@ -83,4 +106,5 @@ if __name__ == "__main__":
     print(get_top_domain("www.baidu.com"))
     print(get_top_domain("a.b.c.co.uk"))
 
-    print(input_with_timeout("Please input something:", 5, "default value"))
+    print(input_with_timeout("Please input something:", 5, "x"))
+    print("done")

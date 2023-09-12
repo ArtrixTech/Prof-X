@@ -5,7 +5,6 @@ import json
 openai.api_key = OPENAI_KEY
 
 
-
 def switch_local():
     openai.api_base = LOCAL_API_BASE
 
@@ -14,7 +13,13 @@ def switch_remote():
     openai.api_base = REMOTE_API_BASE
 
 
-def publication_summarize(input_text, retry=3,remote=True):
+def clear_last_line(last_length):
+    print('\r' + ' ' * last_length + '\r', end='')
+    print(' ' * last_length*2, end='')
+    print('\r' + ' ' * last_length*2 + '\r', end='')
+
+
+def publication_summarize(input_text, retry=3, remote=True):
 
     if remote:
         switch_remote()
@@ -22,6 +27,7 @@ def publication_summarize(input_text, retry=3,remote=True):
         switch_local()
 
     collected_messages = ""
+    snippet_length = 24
 
     for chunk in openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -35,7 +41,7 @@ def publication_summarize(input_text, retry=3,remote=True):
                     "content": input_text
                 }
             ],
-            temperature=0.25,
+            temperature=0.2,
             max_tokens=2048,
             top_p=1,
             frequency_penalty=0,
@@ -45,7 +51,12 @@ def publication_summarize(input_text, retry=3,remote=True):
         content = chunk["choices"][0].get("delta", {}).get("content")
         if content is not None:
             collected_messages += content
-            print(content, end='',flush=True)
+            clear_last_line(len("AI Summarizing: [")+snippet_length+1)
+
+            print("AI Summarizing: [", end='')
+            print(collected_messages[-snippet_length:], end='')
+            print("]", end='', flush=True)
+
     print('')
 
     try:
@@ -56,6 +67,5 @@ def publication_summarize(input_text, retry=3,remote=True):
             return publication_summarize(input_text, retry-1)
         else:
             return None, -1
-
 
     return collected_messages, -1
