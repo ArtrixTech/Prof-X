@@ -6,9 +6,9 @@
 - [x] Automatically gather info about a list of researchers, by searching on Google Scholar
 - [x] AI assisted research area summary
 - [x] Publication information gathering and filtering
-- [ ] Plotting citations versus years
-- [ ] Publication and research progressing summary
-- [ ] Author info & cross-page linking for publications
+- [x] Research Heatmap (An original design, super useful for research trend analysis!)
+- [ ] Publication and research progressing summary (TODO)
+- [ ] Author info & cross-page linking for publications (TODO)
 
 
 ### Things you need
