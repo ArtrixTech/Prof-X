@@ -118,7 +118,7 @@ def generate_markdown(author):
             for i, _ in enumerate(author['publications']):
                 future = executor.submit(fetch_publication_info, author['publications'][i])
                 futures.append(future)
-                time.sleep(0.5)
+                time.sleep(0.2)
 
             for i, future in enumerate(concurrent.futures.as_completed(futures)):
                 author['publications'][i] = future.result()

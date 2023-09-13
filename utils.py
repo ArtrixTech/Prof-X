@@ -6,6 +6,7 @@ import time
 import threading
 from publicsuffixlist import PublicSuffixList
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as pe
 import requests
 import json
 import os
@@ -119,27 +120,26 @@ def display_progress_bar(done, total):
     sys.stdout.flush()
 
 
-def generate_heatmap(author,heatmap_data, start_year, curr_year, tracing_year_span, max_year_span):
+def generate_heatmap(author, heatmap_data, start_year, curr_year, tracing_year_span, max_year_span):
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(7.2, 2.5), dpi=100)
+    im = ax.imshow(heatmap_data[:tracing_year_span, :], cmap='plasma', aspect='auto')
+    
+    max_val,min_val=np.max(heatmap_data[:tracing_year_span, :]),np.min(heatmap_data[:tracing_year_span, :])
 
+    ax.set_xticks(np.arange(curr_year-start_year+1, step=2),
+                  labels=np.arange(start_year, curr_year+1, step=2), fontsize=8)
+    ax.set_yticks(np.arange(tracing_year_span),
+                  labels=np.arange(tracing_year_span)+1, fontsize=8)
+    ax.tick_params(axis=u'both', which=u'both', length=5, color='w')
 
-    im = ax.imshow(heatmap_data[:tracing_year_span, :])
-    print(np.arange(start_year, curr_year))
-    ax.set_xticks(np.arange(curr_year-start_year+1,step=2), labels=np.arange(start_year, curr_year+1,step=2))
-    ax.set_yticks(np.arange(tracing_year_span))
-    # Show all ticks and label them with the respective list entries
-   
-
-    # Rotate the tick labels and set their alignment.
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-             rotation_mode="anchor")
-
-    # Loop over data dimensions and create text annotations.
-    for i in np.arange(start_year, curr_year):
+    for i in np.arange(start_year, curr_year+1):
         for j in np.arange(tracing_year_span):
-            text = ax.text(i, j, heatmap_data[j, i-start_year],
-                           ha="center", va="center", color="w")
+
+            data = int(heatmap_data[j, i-start_year])
+            if data > 0:
+                text = ax.text(i-start_year, j, data, ha="center", va="center",
+                               color="k" if (data-min_val)/max_val > 0.8 else "w", fontsize=8, )
 
     ax.set_title(f"Research Heatmap of {author['name']}")
     fig.tight_layout()
@@ -158,10 +158,14 @@ if __name__ == "__main__":
     #     time.sleep(0.05)
     #     display_progress_bar(i,100)
 
-    heatmap =np.array( [[0,  1,  8, 11, 15, 13, 13,  9,  8, 10, 11, 10, 12,  7, 20,  7,  7, 13, 12, 15 ],
-                        [0,  0,  1,  8, 11, 15, 13, 13,  9,  8, 10, 11, 10, 12,  7, 20,  7,  7, 13, 12 ],
-                        [0,  0,  0,  1,  8, 11, 15, 13, 13,  9,  8, 10, 11, 10, 12,  7, 20,  7, 7, 13 ],
-                        [0,  0,  0,  0,  1,  8, 11, 15, 13, 13,  9,  8, 10, 11, 10, 12,  7, 20, 7,  7 ],
-                        [0,  0,  0,  0,  0,  1,  8, 11, 15, 13, 13,  9,  8, 10, 11, 10, 12,  7, 20,  7 ],
-                        [0,  0,  0,  0,  0,  0,  1,  9, 20, 35, 48, 61, 69, 69, 68, 64, 61, 60, 58, 70 ]])
-    generate_heatmap(np.array(heatmap), 2004, 2023, 5, 10)
+    heatmap = np.array([[0,  1,  8, 11, 15, 13, 13,  9,  8, 10, 11, 10, 12,  7, 20,  7,  7, 13, 12, 15],
+                        [0,  0,  1,  8, 11, 15, 13, 13,  9,  8, 10,
+                            11, 10, 12,  7, 20,  7,  7, 13, 12],
+                        [0,  0,  0,  1,  8, 11, 15, 13, 13,  9,
+                            8, 10, 11, 10, 12,  7, 20,  7, 7, 13],
+                        [0,  0,  0,  0,  1,  8, 11, 15, 13, 13,
+                            9,  8, 10, 11, 10, 12,  7, 20, 7,  7],
+                        [0,  0,  0,  0,  0,  1,  8, 11, 15, 13, 13,
+                            9,  8, 10, 11, 10, 12,  7, 20,  7],
+                        [0,  0,  0,  0,  0,  0,  1,  9, 20, 35, 48, 61, 69, 69, 68, 64, 61, 60, 58, 70]])
+    generate_heatmap({"name": "test"}, np.array(heatmap), 2004, 2023, 5, 10)
