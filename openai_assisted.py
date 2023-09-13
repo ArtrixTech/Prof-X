@@ -57,7 +57,7 @@ def publication_summarize(input_text, retry=3, remote=True):
             print(collected_messages[-snippet_length:], end='')
             print("]", end='', flush=True)
 
-    print('')
+    clear_last_line(len("AI Summarizing: [")+snippet_length+1)
 
     try:
         json.loads(collected_messages)

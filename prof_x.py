@@ -1,11 +1,12 @@
 from scholarly import scholarly
 import re
 import os
-from utils import get_top_domain, save_plot_to_imgur, input_with_timeout, display_progress_bar
+from utils import get_top_domain, save_plot_to_imgur, input_with_timeout, display_progress_bar,generate_heatmap
 from translator import Translator
 from config import TX_SECRET_ID, TX_SECRET_KEY
 import openai_assisted
 import json
+import numpy as np
 
 failed_authors = []
 
@@ -40,57 +41,90 @@ def choose_author(author_name):
     return authors[int(choice) - 1]
 
 
+def generate_briefing_img(author):
+
+    tracing_year_span = 5
+    max_year_span = 10
+
+    print(author['cites_per_year'])
+    start_year, curr_year = list(author['cites_per_year'])[
+        0], list(author['cites_per_year'])[-1]
+
+    if curr_year-start_year > tracing_year_span:
+
+        heat_map_data = np.zeros((tracing_year_span+1, curr_year-start_year+1))
+
+        for window_year in range(start_year, curr_year+1):
+            for curr_pub in author['publications']:
+
+                pub_year=int(list(curr_pub['cites_per_year'])[0])
+              
+                if pub_year >= window_year:
+                    continue
+
+                year_passed = window_year-pub_year
+
+                if year_passed > tracing_year_span:
+                    if year_passed <= max_year_span:
+                        heat_map_data[tracing_year_span, window_year - start_year] += curr_pub['cites_per_year'][window_year] if window_year in curr_pub['cites_per_year'] else 0
+                else:
+                    heat_map_data[year_passed-1, window_year - start_year] += curr_pub['cites_per_year'][window_year] if window_year in curr_pub['cites_per_year'] else 0
+
+        # print(heat_map_data)
+        generate_heatmap(author,heat_map_data,start_year,curr_year,tracing_year_span,max_year_span)
+
+        # if 'url_picture' in author:
+        #     markdown_data += f"![image]({author['url_picture']})\n"
+        # if 'citedby' in author:
+        #     markdown_data += f"- Cited by: {author['citedby']}\n"
+        # if 'hindex' in author:
+        #     markdown_data += f"- h-index: {author['hindex']}\n"
+        #     h_index = int(author['hindex'])
+        # if 'i10index' in author:
+        #     markdown_data += f"- i10-index: {author['i10index']}\n"
+        # if 'affiliation' in author:
+        #     markdown_data += f"- Affiliation: {author['affiliation']}\n"
+        # if 'interests' in author:
+        #     markdown_data += f"- Research Interests: {', '.join(author['interests'])}\n"
+        # if 'email_domain' in author:
+        #     markdown_data += f"- Email Domain: {author['email_domain']}\n"
+        # if 'scholar_id' in author:
+        #     markdown_data += f"- Google Scholar Profile: https://scholar.google.com/citations?user={author['scholar_id']}\n"
+        # if 'homepage' in author:
+        #     markdown_data += f"- Homepage: [Link]({author['homepage']})\n"
+
+
 def generate_markdown(author):
 
     author = scholarly.fill(author)
-
     print("Author info fetched.")
 
-    markdown_data = ""
-    h_index = None
-
-    if 'url_picture' in author:
-        markdown_data += f"![image]({author['url_picture']})\n"
-    if 'citedby' in author:
-        markdown_data += f"- Cited by: {author['citedby']}\n"
-    if 'hindex' in author:
-        markdown_data += f"- h-index: {author['hindex']}\n"
-        h_index = int(author['hindex'])
-    if 'i10index' in author:
-        markdown_data += f"- i10-index: {author['i10index']}\n"
-    if 'affiliation' in author:
-        markdown_data += f"- Affiliation: {author['affiliation']}\n"
-    if 'interests' in author:
-        markdown_data += f"- Research Interests: {', '.join(author['interests'])}\n"
-    if 'email_domain' in author:
-        markdown_data += f"- Email Domain: {author['email_domain']}\n"
-    if 'scholar_id' in author:
-        markdown_data += f"- Google Scholar Profile: https://scholar.google.com/citations?user={author['scholar_id']}\n"
-    if 'homepage' in author:
-        markdown_data += f"- Homepage: [Link]({author['homepage']})\n"
-
-    # 著作信息部分
+    h_index = int(author['hindex']) if 'hindex' in author else None
     if 'publications' in author:
 
         if h_index:
             author['publications'] = author['publications'][:h_index]
 
         print("Fetching publication info...")
-
         for i, _ in enumerate(author['publications']):
             author['publications'][i] = scholarly.fill(
                 author['publications'][i])
             display_progress_bar((i+1), len(author['publications']))
 
+    markdown_data = ""
+    briefing_section = ""
+    summary_section = ""
+    publication_section = ""
+
+    # 简介部分
+    briefing_img = generate_briefing_img(author)
+
+    # 著作信息部分
+    if 'publications' in author:
+
         publicaions = author['publications']
-
-        summary_section = ""
-
-        publication_section = ""
         publication_ai_data_prep = ""
         publication_titles = []
-
-        
 
         for i, publication in enumerate(publicaions):
             title = publication['bib'].get('title', 'Unknown Title')
@@ -146,6 +180,26 @@ def generate_markdown(author):
             publication_section += f"  - Citation: {citation}\n"
             publication_section += f"  - Number of Citations: [{num_citations}]({citedby_url})\n\n"
 
+    # if 'url_picture' in author:
+    #     markdown_data += f"![image]({author['url_picture']})\n"
+    # if 'citedby' in author:
+    #     markdown_data += f"- Cited by: {author['citedby']}\n"
+    # if 'hindex' in author:
+    #     markdown_data += f"- h-index: {author['hindex']}\n"
+    #     h_index = int(author['hindex'])
+    # if 'i10index' in author:
+    #     markdown_data += f"- i10-index: {author['i10index']}\n"
+    # if 'affiliation' in author:
+    #     markdown_data += f"- Affiliation: {author['affiliation']}\n"
+    # if 'interests' in author:
+    #     markdown_data += f"- Research Interests: {', '.join(author['interests'])}\n"
+    # if 'email_domain' in author:
+    #     markdown_data += f"- Email Domain: {author['email_domain']}\n"
+    # if 'scholar_id' in author:
+    #     markdown_data += f"- Google Scholar Profile: https://scholar.google.com/citations?user={author['scholar_id']}\n"
+    # if 'homepage' in author:
+    #     markdown_data += f"- Homepage: [Link]({author['homepage']})\n"
+
     markdown_data += "\n## Research Summary\n"
     markdown_data += summary_section
 
@@ -175,7 +229,8 @@ def main():
     input_str = input("Please enter the list of authors separated by commas: ")
     author_names = get_authors_from_input(input_str)
 
-    for author_name in author_names:
+    for i, author_name in enumerate(author_names):
+
         print(f"Processing {author_name}:")
         author = choose_author(author_name)
 
@@ -188,6 +243,17 @@ def main():
                     mail_raw).removeprefix('@'), md_output)
             else:
                 save_to_md_file(author, 'unclassified', md_output)
+
+        if i == len(author_names)-1:
+            if not len(failed_authors) == 0:
+                print("Failed authors:")
+                for failed_author in failed_authors:
+                    print(f"{failed_author[0]}: {failed_author[1]}")
+                result = input_with_timeout("Retry all? (y/n)", 10, 'n')
+
+                if result == 'y' or result == 'Y':
+                    for failed_author in failed_authors:
+                        author_names.append(failed_author[0])
 
 
 if __name__ == '__main__':
