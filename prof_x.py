@@ -7,6 +7,8 @@ from config import TX_SECRET_ID, TX_SECRET_KEY
 import openai_assisted
 import json
 import numpy as np
+import concurrent.futures
+import time
 
 failed_authors = []
 
@@ -105,11 +107,22 @@ def generate_markdown(author):
         if h_index:
             author['publications'] = author['publications'][:h_index]
 
+
+        def fetch_publication_info(publication):
+            return scholarly.fill(publication)
+
         print("Fetching publication info...")
-        for i, _ in enumerate(author['publications']):
-            author['publications'][i] = scholarly.fill(
-                author['publications'][i])
-            display_progress_bar((i+1), len(author['publications']))
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = []
+            for i, _ in enumerate(author['publications']):
+                future = executor.submit(fetch_publication_info, author['publications'][i])
+                futures.append(future)
+                time.sleep(0.5)
+
+            for i, future in enumerate(concurrent.futures.as_completed(futures)):
+                author['publications'][i] = future.result()
+                display_progress_bar(i+1, len(author['publications']))
 
     markdown_data = ""
     briefing_section = ""
