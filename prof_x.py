@@ -47,9 +47,6 @@ def generate_briefing_img(author):
 
     start_year, curr_year = list(author['cites_per_year'])[0], list(author['cites_per_year'])[-1]
     tracing_year_span = curr_year-start_year+1
-    # max_year_span = 10
-
-    # if curr_year-start_year > tracing_year_span:
 
     heat_map_data = np.zeros((tracing_year_span, tracing_year_span))
 
@@ -58,18 +55,13 @@ def generate_briefing_img(author):
 
             pub_year=int(list(curr_pub['cites_per_year'])[0])
             
-            if pub_year >= window_year or pub_year < start_year:
+            if pub_year > window_year or pub_year < start_year:
                 continue
 
             year_passed = window_year-pub_year
 
-            # if year_passed > tracing_year_span:
-            #     if year_passed <= max_year_span:
-            #         heat_map_data[tracing_year_span, window_year - start_year] += curr_pub['cites_per_year'][window_year] if window_year in curr_pub['cites_per_year'] else 0
-            # else:
-
             try:
-                heat_map_data[year_passed, window_year - start_year] += curr_pub['cites_per_year'][window_year] if window_year in curr_pub['cites_per_year'] else 0
+                heat_map_data[year_passed, pub_year - start_year] += curr_pub['cites_per_year'][window_year] if window_year in curr_pub['cites_per_year'] else -1
             except:
                 print(f"Error: start={start_year} end={curr_year} yearspan={tracing_year_span} win={window_year} pubyear={pub_year}")
 
