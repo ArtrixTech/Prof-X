@@ -120,9 +120,9 @@ def display_progress_bar(done, total):
     sys.stdout.flush()
 
 
-def generate_heatmap(author, heatmap_data, start_year, curr_year, tracing_year_span, max_year_span):
+def generate_heatmap(author, heatmap_data, start_year, curr_year, tracing_year_span):
 
-    fig, ax = plt.subplots(figsize=(7.2, 2.5), dpi=100)
+    fig, ax = plt.subplots(figsize=(7.2, tracing_year_span*0.2), dpi=100)
     im = ax.imshow(heatmap_data[:tracing_year_span, :], cmap='plasma', aspect='auto')
     
     max_val,min_val=np.max(heatmap_data[:tracing_year_span, :]),np.min(heatmap_data[:tracing_year_span, :])
@@ -130,7 +130,7 @@ def generate_heatmap(author, heatmap_data, start_year, curr_year, tracing_year_s
     ax.set_xticks(np.arange(curr_year-start_year+1, step=2),
                   labels=np.arange(start_year, curr_year+1, step=2), fontsize=8)
     ax.set_yticks(np.arange(tracing_year_span),
-                  labels=np.arange(tracing_year_span)+1, fontsize=8)
+                  labels=np.arange(tracing_year_span), fontsize=8)
     ax.tick_params(axis=u'both', which=u'both', length=5, color='w')
 
     for i in np.arange(start_year, curr_year+1):
@@ -139,7 +139,7 @@ def generate_heatmap(author, heatmap_data, start_year, curr_year, tracing_year_s
             data = int(heatmap_data[j, i-start_year])
             if data > 0:
                 text = ax.text(i-start_year, j, data, ha="center", va="center",
-                               color="k" if (data-min_val)/max_val > 0.8 else "w", fontsize=8, )
+                               color="k" if (data-min_val)/max_val > 0.8 else "w", fontsize=10-len(str(data)), )
 
     ax.set_title(f"Research Heatmap of {author['name']}")
     fig.tight_layout()

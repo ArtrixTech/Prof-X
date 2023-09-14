@@ -45,35 +45,38 @@ def choose_author(author_name):
 
 def generate_briefing_img(author):
 
-    tracing_year_span = 5
-    max_year_span = 10
+    start_year, curr_year = list(author['cites_per_year'])[0], list(author['cites_per_year'])[-1]
+    tracing_year_span = curr_year-start_year+1
+    # max_year_span = 10
 
-    print(author['cites_per_year'])
-    start_year, curr_year = list(author['cites_per_year'])[
-        0], list(author['cites_per_year'])[-1]
+    # if curr_year-start_year > tracing_year_span:
 
-    if curr_year-start_year > tracing_year_span:
+    heat_map_data = np.zeros((tracing_year_span, tracing_year_span))
 
-        heat_map_data = np.zeros((tracing_year_span+1, curr_year-start_year+1))
+    for window_year in range(start_year, curr_year+1):
+        for curr_pub in author['publications']:
 
-        for window_year in range(start_year, curr_year+1):
-            for curr_pub in author['publications']:
+            pub_year=int(list(curr_pub['cites_per_year'])[0])
+            
+            if pub_year >= window_year or pub_year < start_year:
+                continue
 
-                pub_year=int(list(curr_pub['cites_per_year'])[0])
-              
-                if pub_year >= window_year:
-                    continue
+            year_passed = window_year-pub_year
 
-                year_passed = window_year-pub_year
+            # if year_passed > tracing_year_span:
+            #     if year_passed <= max_year_span:
+            #         heat_map_data[tracing_year_span, window_year - start_year] += curr_pub['cites_per_year'][window_year] if window_year in curr_pub['cites_per_year'] else 0
+            # else:
 
-                if year_passed > tracing_year_span:
-                    if year_passed <= max_year_span:
-                        heat_map_data[tracing_year_span, window_year - start_year] += curr_pub['cites_per_year'][window_year] if window_year in curr_pub['cites_per_year'] else 0
-                else:
-                    heat_map_data[year_passed-1, window_year - start_year] += curr_pub['cites_per_year'][window_year] if window_year in curr_pub['cites_per_year'] else 0
+            try:
+                heat_map_data[year_passed, window_year - start_year] += curr_pub['cites_per_year'][window_year] if window_year in curr_pub['cites_per_year'] else 0
+            except:
+                print(f"Error: start={start_year} end={curr_year} yearspan={tracing_year_span} win={window_year} pubyear={pub_year}")
 
         # print(heat_map_data)
-        generate_heatmap(author,heat_map_data,start_year,curr_year,tracing_year_span,max_year_span)
+    print(heat_map_data)
+
+    generate_heatmap(author,heat_map_data,start_year,curr_year,tracing_year_span)
 
         # if 'url_picture' in author:
         #     markdown_data += f"![image]({author['url_picture']})\n"
@@ -118,7 +121,7 @@ def generate_markdown(author):
             for i, _ in enumerate(author['publications']):
                 future = executor.submit(fetch_publication_info, author['publications'][i])
                 futures.append(future)
-                time.sleep(0.2)
+                time.sleep(0.05)
 
             for i, future in enumerate(concurrent.futures.as_completed(futures)):
                 author['publications'][i] = future.result()
