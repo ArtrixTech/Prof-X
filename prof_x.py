@@ -1,9 +1,9 @@
 from scholarly import scholarly
 import re
 import os
-from utils import get_top_domain, save_plot_to_imgur, input_with_timeout, display_progress_bar,generate_heatmap
+from utils import *
 from translator import Translator
-from config import TX_SECRET_ID, TX_SECRET_KEY
+from config import TX_SECRET_ID, TX_SECRET_KEY, IMGUR_CLIENT_ID
 import openai_assisted
 import json
 import numpy as np
@@ -66,35 +66,17 @@ def generate_briefing_img(author):
                 print(f"Error: start={start_year} end={curr_year} yearspan={tracing_year_span} win={window_year} pubyear={pub_year}")
 
         # print(heat_map_data)
-    print(heat_map_data)
+    # print(heat_map_data)
 
-    generate_heatmap(author,heat_map_data,start_year,curr_year,tracing_year_span)
-
-        # if 'url_picture' in author:
-        #     markdown_data += f"![image]({author['url_picture']})\n"
-        # if 'citedby' in author:
-        #     markdown_data += f"- Cited by: {author['citedby']}\n"
-        # if 'hindex' in author:
-        #     markdown_data += f"- h-index: {author['hindex']}\n"
-        #     h_index = int(author['hindex'])
-        # if 'i10index' in author:
-        #     markdown_data += f"- i10-index: {author['i10index']}\n"
-        # if 'affiliation' in author:
-        #     markdown_data += f"- Affiliation: {author['affiliation']}\n"
-        # if 'interests' in author:
-        #     markdown_data += f"- Research Interests: {', '.join(author['interests'])}\n"
-        # if 'email_domain' in author:
-        #     markdown_data += f"- Email Domain: {author['email_domain']}\n"
-        # if 'scholar_id' in author:
-        #     markdown_data += f"- Google Scholar Profile: https://scholar.google.com/citations?user={author['scholar_id']}\n"
-        # if 'homepage' in author:
-        #     markdown_data += f"- Homepage: [Link]({author['homepage']})\n"
-
+    fig=generate_heatmap(author,heat_map_data,start_year,curr_year,tracing_year_span)
+    return save_plot_to_imgur(fig, IMGUR_CLIENT_ID)
 
 def generate_markdown(author):
 
     author = scholarly.fill(author)
     print("Author info fetched.")
+
+    # print(author)
 
     h_index = int(author['hindex']) if 'hindex' in author else None
     if 'publications' in author:
@@ -106,9 +88,10 @@ def generate_markdown(author):
         def fetch_publication_info(publication):
             return scholarly.fill(publication)
 
-        print("Fetching publication info...")
+        print(">> Fetching publication info...")
+        last_bar_length=0
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = []
             for i, _ in enumerate(author['publications']):
                 future = executor.submit(fetch_publication_info, author['publications'][i])
@@ -117,15 +100,39 @@ def generate_markdown(author):
 
             for i, future in enumerate(concurrent.futures.as_completed(futures)):
                 author['publications'][i] = future.result()
-                display_progress_bar(i+1, len(author['publications']))
+                last_bar_length=display_progress_bar(i+1, len(author['publications']))
+
+        clear_last_line(last_bar_length)
+        print("Publication info fetched.")
 
     markdown_data = ""
     briefing_section = ""
     summary_section = ""
     publication_section = ""
 
-    # 简介部分
+    # Briefing Part
+    print(">> Generating briefing info...")
+    
+    if 'url_picture' in author:
+        briefing_section += f"![image]({author['url_picture']})\n"
+    if 'hindex' in author:
+        if 'hindex5y' in author:
+            briefing_section += f"- h-index: {author['hindex']} -> {author['hindex5y']}(5y)\n"
+        h_index = int(author['hindex'])
+    if 'i10index' in author:
+        briefing_section += f"- i10-index: {author['i10index']}\n"
+    if 'affiliation' in author:
+        briefing_section += f"- Affiliation: {author['affiliation']}\n"
+    if 'interests' in author:
+        briefing_section += f"- Research Interests: {', '.join(author['interests'])}\n"
+    if 'scholar_id' in author:
+        briefing_section += f"- Google Scholar Profile: https://scholar.google.com/citations?user={author['scholar_id']}\n"
+    if 'homepage' in author:
+        briefing_section += f"- Homepage: [Link]({author['homepage']})\n"
+
     briefing_img = generate_briefing_img(author)
+    briefing_section += f"![image]({briefing_img})\n"
+    print("Briefing info generated.")
 
     # 著作信息部分
     if 'publications' in author:
@@ -159,6 +166,7 @@ def generate_markdown(author):
                 else:
                     return None, -1
 
+        print(">> AI Summarizing...")
         ai_summary, total_tokens = summary_ai()
         if ai_summary is None:
             failed_authors.append((author['name'], "AI Summarization Failed"))
@@ -179,14 +187,26 @@ def generate_markdown(author):
         for idx, publication in enumerate(publicaions):
             title = publication['bib'].get('title', 'Unknown Title')
             pub_year = publication['bib'].get('pub_year', 'Unknown Year')
+            author_info=publication['bib'].get('author','Unknown Author')
             citation = publication['bib'].get('citation', 'Unknown Citation')
             num_citations = publication.get('num_citations', 0)
-            citedby_url = publication.get('citedby_url', '#')
+            # citedby_url = publication.get('citedby_url', '#')
+            publication_url=publication.get('pub_url','#')
 
-            publication_section += f"- **{title}** ({pub_year})\n"
+            author_info=author_info.replace(' and ',',')
+            author_list=author_info.split(',')
+
+            author_info=''
+            for i,author_name in enumerate(author_list):
+                if author_name in author['name'] or author['name'] in author_name:
+                    author_name=f"***<u>{author_name}</u>***"
+                author_info+=f"{i} {author_name}"+', '
+
+            publication_section += f"- **<{pub_year}, {num_citations}> {title}**\n"
             publication_section += f"  - {translations[idx]}\n"
-            publication_section += f"  - Citation: {citation}\n"
-            publication_section += f"  - Number of Citations: [{num_citations}]({citedby_url})\n\n"
+            publication_section += f"  - {author_info}\n"
+            publication_section += f"  - {citation}\n"
+            publication_section += f"  - [{publication_url}]({publication_url})\n\n"
 
     # if 'url_picture' in author:
     #     markdown_data += f"![image]({author['url_picture']})\n"
@@ -208,10 +228,12 @@ def generate_markdown(author):
     # if 'homepage' in author:
     #     markdown_data += f"- Homepage: [Link]({author['homepage']})\n"
 
-    markdown_data += "\n## Research Summary\n"
+    markdown_data += briefing_section
+
+    markdown_data += "\n## Research Summary\n\n"
     markdown_data += summary_section
 
-    markdown_data += "\n## Publications\n"
+    markdown_data += "\n## Publications\n\n"
     markdown_data += publication_section
 
     markdown_data += "\n## Raw Data\n"
@@ -243,12 +265,12 @@ def main():
         author = choose_author(author_name)
 
         if author:
-            print(f"Authour found, fetching more info...")
+            print(f">> Authour found, fetching more info...")
             md_output = generate_markdown(author)
             mail_raw = author.get('email_domain', '@no_data.com')
             if '@' in mail_raw:
                 save_to_md_file(author, get_top_domain(
-                    mail_raw).removeprefix('@'), md_output)
+                    mail_raw).replace('@',''), md_output)
             else:
                 save_to_md_file(author, 'unclassified', md_output)
 

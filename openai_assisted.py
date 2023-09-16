@@ -1,6 +1,7 @@
 import os
 import openai
 from config import OPENAI_KEY, REMOTE_API_BASE, LOCAL_API_BASE
+from utils import clear_last_line
 import json
 openai.api_key = OPENAI_KEY
 
@@ -11,13 +12,6 @@ def switch_local():
 
 def switch_remote():
     openai.api_base = REMOTE_API_BASE
-
-
-def clear_last_line(last_length):
-    print('\r' + ' ' * last_length + '\r', end='')
-    print(' ' * last_length*2, end='')
-    print('\r' + ' ' * last_length*2 + '\r', end='')
-
 
 def publication_summarize(input_text, retry=3, remote=True):
 
@@ -51,13 +45,13 @@ def publication_summarize(input_text, retry=3, remote=True):
         content = chunk["choices"][0].get("delta", {}).get("content")
         if content is not None:
             collected_messages += content
-            clear_last_line(len("AI Summarizing: [")+snippet_length+1)
+            clear_last_line(len("[")+snippet_length+1)
 
-            print("AI Summarizing: [", end='')
+            print("[", end='')
             print(collected_messages[-snippet_length:], end='')
             print("]", end='', flush=True)
 
-    clear_last_line(len("AI Summarizing: [")+snippet_length+1)
+    clear_last_line(len("[")+snippet_length+1)
 
     try:
         json.loads(collected_messages)
