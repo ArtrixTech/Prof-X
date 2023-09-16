@@ -128,7 +128,7 @@ def generate_markdown(author):
         'h_index': f"{author['hindex']} -> {author['hindex5y']}<sub>(5y)</sub>" if 'hindex5y' in author else author['hindex'] if 'hindex' in author else 'Unknown h-index',
         'research_interests': ', '.join(author['interests']) if 'interests' in author else 'Unknown Research Interests',
         'scholar_link': f"https://scholar.google.com/citations?user={author['scholar_id']}" if 'scholar_id' in author else 'https://scholar.google.com/',
-        'homepage_link': author['homepage'] if 'homepage' in author else 'No Homepage Info',
+        'homepage_link': author['homepage'] if 'homepage' in author else 'No Homepage Info', # TODO: Fix the handling of homepage
     }
     rendered = page_template.fill_template(
         page_template.briefing_template, filling_data)

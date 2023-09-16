@@ -19,6 +19,9 @@
 - A Tencent Translate API Key
   - For translating article names into your language 
   - Chinese only currently :) Will add multilingual support after on
+- An Imgur.com Client ID
+  - For uploading the briefing images anonymously
+  - Can be easily registered through [This Link](https://api.imgur.com/oauth2/addclient)
 
 
 ### Environment Preparation
@@ -35,6 +38,8 @@ REMOTE_API_BASE = "https://api.openai.com/v1"
 OPENAI_KEY = "sk-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 TX_SECRET_ID = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 TX_SECRET_KEY = "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+
+IMGUR_CLIENT_ID="DDDDDDDDDDD"
 </code></pre>
 
 ### Running
