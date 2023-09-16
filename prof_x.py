@@ -105,7 +105,7 @@ def generate_markdown(author):
         clear_last_line(last_bar_length)
         print("Publication info fetched.")
 
-    markdown_data = ""
+    markdown_data = "\n"
     briefing_section = ""
     summary_section = ""
     publication_section = ""
@@ -198,9 +198,10 @@ def generate_markdown(author):
 
             author_info=''
             for i,author_name in enumerate(author_list):
+                author_name=remove_symbols(author_name)
                 if author_name in author['name'] or author['name'] in author_name:
-                    author_name=f"***<u>{author_name}</u>***"
-                author_info+=f"{i} {author_name}"+', '
+                    author_name=f'<span style="text-decoration: underline; font-style: italic; font-weight: bold;">{author_name}</span>'
+                author_info+=f"{author_name}<sub>{i+1}</sub>"+', '
 
             publication_section += f"- **<{pub_year}, {num_citations}> {title}**\n"
             publication_section += f"  - {translations[idx]}\n"
@@ -265,7 +266,7 @@ def main():
         author = choose_author(author_name)
 
         if author:
-            print(f">> Authour found, fetching more info...")
+            print(f">> Author found, fetching more info...")
             md_output = generate_markdown(author)
             mail_raw = author.get('email_domain', '@no_data.com')
             if '@' in mail_raw:

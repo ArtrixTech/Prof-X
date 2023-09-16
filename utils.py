@@ -175,6 +175,16 @@ def clear_last_line(last_length):
     print(' ' * last_length*2, end='')
     print('\r' + ' ' * last_length*2 + '\r', end='')
 
+import string
+def remove_symbols(text):
+    # 创建一个包含所有标点符号的字符串
+    symbols = string.punctuation
+
+    # 使用str.translate()方法将标点符号和空格替换为空字符
+    translation_table = str.maketrans('', '', symbols)
+    cleaned_text = text.translate(translation_table)
+
+    return cleaned_text
 
 if __name__ == "__main__":
 
