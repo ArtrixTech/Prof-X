@@ -40,16 +40,20 @@ class Translator:
         except TencentCloudSDKException as err:
             print(err)
 
-    def batch_translate(self, text_list, dest_lang, source_lang="auto", max_chunk_size=6000):
+    def batch_translate(self, text_list, dest_lang, source_lang="auto", max_chunk_size=5500):
         try:
             translated_texts = []
             chunk = []
+            len_chunk=0
+
             for text in text_list:
-                if len(chunk) + len(text) <= max_chunk_size:
+                if len_chunk + len(text) <= max_chunk_size:
                     chunk.append(text)
+                    len_chunk+=len(text)
                 else:
                     translated_texts.extend(self.translate_chunk(chunk, dest_lang, source_lang))
-                    chunk = []
+                    chunk = [text]
+                    len_chunk=len(text)
 
             if chunk:
                 translated_texts.extend(self.translate_chunk(chunk, dest_lang, source_lang))
@@ -61,6 +65,7 @@ class Translator:
             raise ValueError("Tencent Translate Failed")
 
     def translate_chunk(self, chunk, dest_lang, source_lang):
+        # print(len(chunk),chunk)
         req = models.TextTranslateBatchRequest()
         params = {
             "Source": source_lang,

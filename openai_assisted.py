@@ -3,6 +3,8 @@ import openai
 from config import OPENAI_KEY, REMOTE_API_BASE, LOCAL_API_BASE
 from utils import clear_last_line
 import json
+import tiktoken
+
 openai.api_key = OPENAI_KEY
 
 
@@ -13,6 +15,9 @@ def switch_local():
 def switch_remote():
     openai.api_base = REMOTE_API_BASE
 
+def count_tokens(input_text):
+    return len(tiktoken.encoding_for_model("gpt-3.5-turbo").encode(input_text))
+
 def publication_summarize(input_text, retry=3, remote=True):
 
     if remote:
@@ -21,10 +26,12 @@ def publication_summarize(input_text, retry=3, remote=True):
         switch_local()
 
     collected_messages = ""
-    snippet_length = 24
+    snippet_length = 50
+
+    complete_max=2048
 
     for chunk in openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-3.5-turbo" if count_tokens(input_text)+complete_max<4097 else "gpt-3.5-turbo-16k",
             messages=[
                 {
                     "role": "system",
@@ -36,7 +43,7 @@ def publication_summarize(input_text, retry=3, remote=True):
                 }
             ],
             temperature=0.2,
-            max_tokens=2048,
+            max_tokens=complete_max,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=2,
