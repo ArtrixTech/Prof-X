@@ -53,25 +53,16 @@ def generate_briefing_img(author):
 
     heat_map_data = np.zeros((tracing_year_span, tracing_year_span))
 
-    for window_year in range(start_year, curr_year+1):
-        for curr_pub in author['publications']:
+    for curr_pub in author['publications']:
 
-            pub_year = int(list(curr_pub['cites_per_year'])[0])
+        pub_year = int(list(curr_pub['cites_per_year'])[0])
+        if pub_year < start_year:
+            continue
 
-            if pub_year > window_year or pub_year < start_year:
-                continue
-
-            year_passed = window_year-pub_year
-
-            try:
-                heat_map_data[year_passed, pub_year -
-                              start_year] += curr_pub['cites_per_year'][window_year] if window_year in curr_pub['cites_per_year'] else -1
-            except:
-                print(
-                    f"Error: start={start_year} end={curr_year} yearspan={tracing_year_span} win={window_year} pubyear={pub_year}")
-
-        # print(heat_map_data)
-    # print(heat_map_data)
+        for year in curr_pub['cites_per_year']:
+            year_passed = year-pub_year
+            heat_map_data[year_passed, pub_year -
+                          start_year] += curr_pub['cites_per_year'][year]
 
     fig = generate_heatmap(author, heat_map_data,
                            start_year, curr_year, tracing_year_span)

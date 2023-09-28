@@ -126,6 +126,11 @@ def generate_heatmap(author, heatmap_data, start_year, curr_year, tracing_year_s
     font_path = 'resources/fonts/Overpass-Medium.ttf'
     fm.fontManager.addfont(font_path)
 
+    # import sys
+    # import numpy
+    # numpy.set_printoptions(threshold=sys.maxsize)
+    # print(heatmap_data)
+
     def mask_lower_tri(heatmap_data):
         heatmap_data = np.fliplr(heatmap_data)
         rows, cols = np.tril_indices(heatmap_data.shape[0], k=-1)
