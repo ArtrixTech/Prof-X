@@ -48,15 +48,16 @@ def publication_summarize(input_text, retry=3, remote=True):
             frequency_penalty=0,
             presence_penalty=2,
             stream=True,
-    ):
-        content = chunk["choices"][0].get("delta", {}).get("content")
-        if content is not None:
-            collected_messages += content
-            clear_last_line(len("[")+snippet_length+1)
+    ):  
+        if len(chunk["choices"]) > 0:
+            content = chunk["choices"][0].get("delta", {}).get("content")
+            if content is not None:
+                collected_messages += content
+                clear_last_line(len("[")+snippet_length+1)
 
-            print("[", end='')
-            print(collected_messages[-snippet_length:], end='')
-            print("]", end='', flush=True)
+                print("[", end='')
+                print(collected_messages[-snippet_length:], end='')
+                print("]", end='', flush=True)
 
     clear_last_line(len("[")+snippet_length+1)
 
