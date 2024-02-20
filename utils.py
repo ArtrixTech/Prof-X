@@ -11,6 +11,7 @@ import matplotlib.font_manager as fm
 import requests
 import json
 import os
+import pyimgur
 
 
 def get_top_domain(domain: str) -> str:
@@ -28,23 +29,15 @@ def get_top_domain(domain: str) -> str:
 
 
 def save_plot_to_imgur(fig, client_id):
-    # 保存图表到临时文件
+
     temp_file = "temp_plot.png"
     fig.savefig(temp_file)
 
-    # 将图表上传到Imgur
-    url = "https://api.imgur.com/3/image"
-    headers = {"Authorization": 'Client-ID ' +client_id}
-    data = {"image": open(temp_file, "rb").read()}
-
-    response = requests.post(url, headers=headers, data=data)
-    response_data = json.loads(response.text)
-
-    imgur_link = response_data["data"]["link"]
-
+    im = pyimgur.Imgur(client_id)
+    uploaded_image = im.upload_image(temp_file)
     os.remove(temp_file)
 
-    return imgur_link
+    return uploaded_image.link
 
 
 class InputTimeoutError(Exception):
